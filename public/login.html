@@ -5,9 +5,28 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comp 440 Project</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h1>Welcome to the Comp 440 Project</h1>
-    <p>Please log in to continue.</p>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/public/index.html">Home</a></li>
+                <li><a href="/public/login.html">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+    <h1>Welcome to our Comp 440 Project</h1>
+    <form action="/login" method="POST">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <input type="submit" value="Login">
+        <p class="register-link">
+            Need an account? 
+            <a href="/public/register.html">Register here</a>.
+        </p>
+    </form>
 </body>
 </html>

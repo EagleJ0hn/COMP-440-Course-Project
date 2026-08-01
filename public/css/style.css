@@ -4,7 +4,7 @@
     --base-color: #ffffff;
     --text-color: #000000;
     --primary-color: #4CAF50;
-    --secondary-color: #f44336;
+    --secondary-color: #D3D3D3;
     --font-family: 'Open Sans', sans-serif;
 }
 
@@ -20,12 +20,18 @@ html {
     color: var(--text-color);
 }
 
-body {
+header {
+    background-color: var(--secondary-color);
     padding: 1em;
+    text-align: center;
+}
+
+body {
+    margin: 0;
 }
 
 nav {
-    margin: 1em auto 3em auto;
+    margin-top: 1em;
 }
 
 nav ul {
@@ -37,4 +43,27 @@ nav ul {
 
 nav li:first-child {
     margin-right: auto;
+}
+
+main {
+    padding: 2em;
+    text-align: center;
+}
+
+h1 {
+    text-align: center;
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
+
+form {
+    background-color: var(--secondary-color);
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2em;
+    gap: 10px;
+    border-radius: 8px;
 }
