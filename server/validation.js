@@ -1,4 +1,6 @@
+// Validate the information provided by the user during registration
 function validateInput(input) {
+    // Extract the relevant fields from the input object
     const{
         username,
         password,
@@ -9,6 +11,7 @@ function validateInput(input) {
         phone
     } = input;
 
+    // Check if any of the required fields are missing or empty
     if (!username || !password || !confirmPassword || !firstName || !lastName || !email || !phone) {
         return{
             valid: false,
@@ -16,6 +19,7 @@ function validateInput(input) {
         };
     }
 
+    //Make sure the password and confirmPassword match
     if (password !== confirmPassword) {
         return{
             valid: false,
@@ -29,6 +33,7 @@ function validateInput(input) {
     };
 }
 
+// Make the functions available for import in other files
 module.exports = {
     validateInput
 };
