@@ -3,7 +3,7 @@ Group Project for COMP 440 Database Design
 Andrei David
 Juan Aguilar
 
-Youtube link:
+Youtube link: https://youtu.be/9wFNjjLbCAM
 
 If you would like to try please follow the instructions below.
 
