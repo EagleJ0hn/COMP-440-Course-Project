@@ -45,7 +45,16 @@ function requireAuth(req, res, next){
     next();
 }
 
+function logout(req){
+    const token = getSessionToken(req);
+
+    if (token){
+        sessions.delete(token);
+    }
+}
+
 module.exports = {
     createSession,
-    requireAuth
+    requireAuth,
+    logout
 };

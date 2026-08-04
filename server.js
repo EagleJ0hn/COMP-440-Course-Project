@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const { registerUser, loginUser } = require("./server/auth");
 const { validateInput } = require("./server/validation");
-const {createSession, requireAuth } = require("./server/authSession");
+const {createSession, requireAuth, logout } = require("./server/authSession");
 
 const express = require("express");
 const path = require("path");
@@ -95,6 +95,20 @@ app.post("/api/login", async (req, res) => {
             message: "An error occurred during login."
         });
     }
+});
+
+app.post("/api/logout", (req, res) =>{
+    logout(req);
+
+    res.setHeader(
+        "Set-Cookie",
+        "sessionToken=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict"
+    );
+
+    res.json({
+        success: true,
+        message: "Logged out successfully."
+    });
 });
 
 app.get("/api/me", requireAuth, (req, res) => {
