@@ -2,40 +2,14 @@ require("dotenv").config();
 
 const { registerUser, loginUser } = require("./server/auth");
 const { validateInput } = require("./server/validation");
+const {createSession, requireAuth } = require("./server/authSession");
 
 const express = require("express");
 const path = require("path");
-const crypto = require("crypto");
 const pool = require("./db");
 const { register } = require("module");
 
 const app = express();
-const sessions = new Map();
-
-function createSession(username){
-    const token = crypto.randomBytes(32).toString("hex");
-    sessions.set(token, username);
-    return token;
-}
-
-function getSessionToken(req){
-    const cookieHeader = req.headers.cookie;
-    if (!cookieHeader){
-        return null;
-    }
-
-    const cookies = cookiesHeader.split(";");
-
-    for (const cookie of cookies){
-        const [name, value] = cookie.trim().split("=");
-
-        if (name === "sessionToken"){
-            return value;
-        }
-    }
-    return null;
-}
-
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
