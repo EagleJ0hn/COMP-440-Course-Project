@@ -69,7 +69,7 @@ async function loginUser(username, password) {
     if (users.length === 0) {
         return {
             success: false,
-            messsage: "Invalid username or password."
+            message: "Invalid username or password."
         };
     }
 
