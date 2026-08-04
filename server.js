@@ -79,8 +79,14 @@ app.post("/api/login", async (req, res) => {
     if (!result.success) {
         return res.status(401).json(result);
     }
+    const token = createSession(username);
+    res.setHeader(
+        "Set-Cookie",
+        'sessionToken=${token}; HttpOnly; Path=/; SameSite=Strict'
+    );
 
     res.status(200).json(result);
+
     } catch (error) {
         console.error("Login error:", error);
 
