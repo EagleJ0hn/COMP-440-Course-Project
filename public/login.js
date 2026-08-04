@@ -23,6 +23,10 @@ form.addEventListener("submit", async (event) => {
         const result = await response.json();
 
         alert(result.message);
+
+        if (result.success){
+            window.location.href = "/index.html";
+        }
         
     } catch (error) {
         console.error(error);
