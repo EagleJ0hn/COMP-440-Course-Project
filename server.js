@@ -82,7 +82,7 @@ app.post("/api/login", async (req, res) => {
     const token = createSession(username);
     res.setHeader(
         "Set-Cookie",
-        'sessionToken=${token}; HttpOnly; Path=/; SameSite=Strict'
+        `sessionToken=${token}; HttpOnly; Path=/; SameSite=Strict`
     );
 
     res.status(200).json(result);
@@ -95,6 +95,13 @@ app.post("/api/login", async (req, res) => {
             message: "An error occurred during login."
         });
     }
+});
+
+app.get("/api/me", requireAuth, (req, res) => {
+    res.json({
+        success: true,
+        username: req.username
+    });
 });
 
 app.listen(PORT, () => {
