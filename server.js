@@ -19,6 +19,7 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// Check if the server is connected to MySQL
 app.get("/db-test", async (req, res) => {
     try {
         const [rows] = await pool.execute("SELECT 1 AS connected");
@@ -116,6 +117,283 @@ app.get("/api/me", requireAuth, (req, res) => {
         success: true,
         username: req.username
     });
+});
+
+app.get("/api/items", async (req, res) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT
+                i.itemId,
+                i.itemTitle,
+                i.itemDescription,
+                i.itemPrice,
+                i.datePosted,
+                i.sellerID,
+                COALESCE(
+                    GROUP_CONCAT(
+                        DISTINCT c.categoryName
+                        ORDER BY c.categoryName
+                        SEPARATOR ','
+                    ),
+                    ''
+                ) AS categories
+            FROM items AS i
+            LEFT JOIN item_categories AS ic
+                ON i.itemId = ic.itemId
+            LEFT JOIN categories AS c
+                ON ic.categoryId = c.categoryId
+            GROUP BY
+                i.itemId,
+                i.itemTitle,
+                i.itemDescription,
+                i.itemPrice,
+                i.datePosted,
+                i.sellerID
+            ORDER BY i.datePosted DESC
+        `);
+
+        res.json({
+            success: true,
+            items: rows
+        });
+    } catch (error) {
+        console.error("Get items error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not retrieve items."
+        });
+    }
+});
+
+app.get("/api/items/mine", requireAuth, async (req, res) => {
+    try {
+        const [rows] = await pool.execute(
+            `
+            SELECT
+                i.itemId,
+                i.itemTitle,
+                i.itemDescription,
+                i.itemPrice,
+                i.datePosted,
+                i.sellerID,
+                COALESCE(
+                    GROUP_CONCAT(
+                        DISTINCT c.categoryName
+                        ORDER BY c.categoryName
+                        SEPARATOR ','
+                    ),
+                    ''
+                ) AS categories
+            FROM items AS i
+            LEFT JOIN item_categories AS ic
+                ON i.itemId = ic.itemId
+            LEFT JOIN categories AS c
+                ON ic.categoryId = c.categoryId
+            WHERE i.sellerID = ?
+            GROUP BY
+                i.itemId,
+                i.itemTitle,
+                i.itemDescription,
+                i.itemPrice,
+                i.datePosted,
+                i.sellerID
+            ORDER BY i.datePosted DESC
+            `,
+            [req.username]
+        );
+
+        res.json({
+            success: true,
+            items: rows
+        });
+    } catch (error) {
+        console.error("Get my items error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not retrieve your items."
+        });
+    }
+});
+
+app.get("/api/items/search", async (req, res) => {
+    const category = String(req.query.category || "")
+        .trim()
+        .toLowerCase();
+
+    if (!category) {
+        return res.status(400).json({
+            success: false,
+            message: "A category is required."
+        });
+    }
+
+    try {
+        const [rows] = await pool.execute(
+            `
+            SELECT
+                i.itemId,
+                i.itemTitle,
+                i.itemDescription,
+                i.itemPrice,
+                i.datePosted,
+                i.sellerID,
+                COALESCE(
+                    GROUP_CONCAT(
+                        DISTINCT allCategories.categoryName
+                        ORDER BY allCategories.categoryName
+                        SEPARATOR ','
+                    ),
+                    ''
+                ) AS categories
+            FROM items AS i
+            INNER JOIN item_categories AS searchedItems
+                ON i.itemId = searchedItems.itemId
+            INNER JOIN categories AS searchedCategory
+                ON searchedItems.categoryId = searchedCategory.categoryId
+            LEFT JOIN item_categories AS allItemCategories
+                ON i.itemId = allItemCategories.itemId
+            LEFT JOIN categories AS allCategories
+                ON allItemCategories.categoryId = allCategories.categoryId
+            WHERE LOWER(searchedCategory.categoryName) = ?
+            GROUP BY
+                i.itemId,
+                i.itemTitle,
+                i.itemDescription,
+                i.itemPrice,
+                i.datePosted,
+                i.sellerID
+            ORDER BY i.datePosted DESC
+            `,
+            [category]
+        );
+
+        res.json({
+            success: true,
+            items: rows
+        });
+    } catch (error) {
+        console.error("Search items error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not search for items."
+        });
+    }
+});
+
+app.post("/api/items", requireAuth, async (req, res) => {
+    const title = String(req.body.title || "").trim();
+    const description = String(req.body.description || "").trim();
+    const price = Number(req.body.price);
+
+    let submittedCategories = req.body.categories;
+
+    if (typeof submittedCategories === "string") {
+        submittedCategories = submittedCategories.split(",");
+    }
+
+    if (!Array.isArray(submittedCategories)) {
+        submittedCategories = [];
+    }
+
+    const categories = [
+        ...new Set(
+            submittedCategories
+                .map(category => String(category).trim().toLowerCase())
+                .filter(Boolean)
+        )
+    ];
+
+    if (!title || title.length > 100) {
+        return res.status(400).json({
+            success: false,
+            message: "Title must contain between 1 and 100 characters."
+        });
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Enter a valid price greater than zero."
+        });
+    }
+
+    if (categories.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Enter at least one category."
+        });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        const [itemResult] = await connection.execute(
+            `
+            INSERT INTO items (
+                itemTitle,
+                itemDescription,
+                itemPrice,
+                sellerID
+            )
+            VALUES (?, ?, ?, ?)
+            `,
+            [title, description || null, price, req.username]
+        );
+
+        const itemId = itemResult.insertId;
+
+        for (const categoryName of categories) {
+            await connection.execute(
+                `
+                INSERT INTO categories (categoryName)
+                VALUES (?)
+                ON DUPLICATE KEY UPDATE
+                    categoryName = VALUES(categoryName)
+                `,
+                [categoryName]
+            );
+
+            const [categoryRows] = await connection.execute(
+                `
+                SELECT categoryId
+                FROM categories
+                WHERE categoryName = ?
+                `,
+                [categoryName]
+            );
+
+            await connection.execute(
+                `
+                INSERT INTO item_categories (itemId, categoryId)
+                VALUES (?, ?)
+                `,
+                [itemId, categoryRows[0].categoryId]
+            );
+        }
+
+        await connection.commit();
+
+        res.status(201).json({
+            success: true,
+            message: "Item added successfully.",
+            itemId
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error("Add item error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not add the item."
+        });
+    } finally {
+        connection.release();
+    }
 });
 
 app.listen(PORT, () => {
