@@ -31,3 +31,15 @@ create table item_categories(
     foreign key (categoryId) references categories(categoryId)
 ); 
 
+CREATE TABLE reviews(
+    reviewId int auto_increment primary key,
+    username varchar(20) not null,
+    itemId int not null,
+    rating enum('Excellent', 'Good', 'Fair', 'Poor') not null,
+    comment varchar(500) not null,
+    reviewDate timestamp default current_timestamp,
+    Foreign Key (username) REFERENCES users(username),
+    Foreign Key (itemId) REFERENCES items(itemId),
+    unique (username, itemId)
+);
+
