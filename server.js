@@ -3,6 +3,7 @@ require("dotenv").config();
 const { registerUser, loginUser } = require("./server/auth");
 const { validateInput } = require("./server/validation");
 const {createSession, requireAuth, logout } = require("./server/authSession");
+const {createReview } = require("./server/reviews");
 
 const express = require("express");
 const path = require("path");
@@ -393,6 +394,39 @@ app.post("/api/items", requireAuth, async (req, res) => {
         });
     } finally {
         connection.release();
+    }
+});
+
+app.post("/api/reviews", requireAuth, async (req, res) =>{
+    try{
+        const{
+            itenId,
+            rating,
+            comment
+        } = req.body;
+        if (!itemId || !rating || !comment){
+            return res.status(400).json({
+                success: false,
+                message: "Item, rating, and comment are required."
+            });
+        }
+        const reviewId = await createReview(
+            req.username,
+            itemId,
+            rating,
+            comment
+        );
+        res.status(201).json({
+            success: true,
+            message: "Review submitted successfully.",
+            reviewId
+        });
+    } catch (error){
+        console.error("Create review error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Could not submit review."
+        });
     }
 });
 
