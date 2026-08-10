@@ -85,6 +85,15 @@ function renderItems(container, items) {
                 Posted ${escapeHtml(formatDate(item.datePosted))}
             </small>
         `;
+        
+        const reviewButton = document.createElement("button");
+        reviewButton.textContent = "Review Item";
+
+        reviewButton.addEventListener("click", () => {
+            window.location.href = `/reviews.html?itemId=${item.itemId}`;
+        });
+
+        article.appendChild(reviewButton);
 
         container.appendChild(article);
     }

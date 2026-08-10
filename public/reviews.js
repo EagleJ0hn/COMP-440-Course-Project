@@ -6,6 +6,9 @@ const message = document.getElementById("message");
 const authMessage = document.getElementById("authMessage");
 const logoutButton = document.getElementById("logoutButton");
 const reviewsList = document.getElementById("reviewsList");
+const urlParams = new URLSearchParams(window.location.search);
+const selectedItemId = urlParams.get("itemId");
+const itemInfo = document.getElementById("itemInfo");
 
 async function checkAuthentication() {
     try {
@@ -31,6 +34,37 @@ async function checkAuthentication() {
         reviewSection.classList.add("hidden");
 
         return false;
+    }
+}
+
+async function loadSelectedItem() {
+    if (!selectedItemId) {
+        itemInfo.textContent = "No item selected.";
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/items");
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message);
+        }
+
+        const item = result.items.find(
+            item => String(item.itemId) === String(selectedItemId)
+        );
+
+        if (!item) {
+            itemInfo.textContent = "Item not found.";
+            return;
+        }
+
+        itemInfo.textContent = `Reviewing: ${item.itemTitle}`;
+
+    } catch (error) {
+        console.error("Load item error:", error);
+        itemInfo.textContent = "Could not load item information.";
     }
 }
 
@@ -178,3 +212,8 @@ logoutButton.addEventListener("click", async () => {
 
 checkAuthentication();
 loadReviews();
+loadSelectedItem();
+
+if (selectedItemId){
+    document.getElementById("itemId").value = selectedItemId;
+}
