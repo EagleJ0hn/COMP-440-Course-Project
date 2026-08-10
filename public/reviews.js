@@ -4,7 +4,7 @@ const reviewForm = document.getElementById("reviewForm");
 const reviewSection = document.getElementById("reviewSection");
 const message = document.getElementById("message");
 const authMessage = document.getElementById("authMessage");
-const logoutButton = document.getElementById("logoutButton");
+
 const reviewsList = document.getElementById("reviewsList");
 const urlParams = new URLSearchParams(window.location.search);
 const selectedItemId = urlParams.get("itemId");
@@ -29,7 +29,7 @@ async function checkAuthentication() {
 
     } catch (error) {
         authMessage.textContent =
-            "You must be logged in to submit a review.";
+            "You must be logged in to submit a review. Click Login to sign in.";
 
         reviewSection.classList.add("hidden");
 
@@ -192,23 +192,6 @@ reviewForm.addEventListener("submit", async (event) => {
     }
 });
 
-logoutButton.addEventListener("click", async () => {
-
-    try {
-
-        const response = await fetch("/api/logout", {
-            method: "POST",
-            credentials: "same-origin"
-        });
-
-        if (response.ok) {
-            window.location.href = "/index.html";
-        }
-
-    } catch (error) {
-        console.error("Logout error:", error);
-    }
-});
 
 checkAuthentication();
 loadReviews();

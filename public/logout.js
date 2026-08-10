@@ -4,8 +4,13 @@ const loginLink = document.getElementById("loginLink");
 // Checking whether to display the login or logout button
 async function checkLoginStatus(){
     try{
-        const response = await fetch("/api/me");
+        const response = await fetch("/api/me",{
+            credentials: "same-origin"
+        });
+
         const result = await response.json();
+
+        console.log("Login status:", result);
 
         if (result.success){
             // User is logged in
