@@ -21,7 +21,7 @@ async function createReview(username, itemId, rating, comment) {
     // Check that the item exists
     const [items] = await pool.execute(
         `
-        SELECT itemId
+        SELECT itemId, sellerID
         FROM items
         WHERE itemId = ?
         `,
@@ -30,6 +30,24 @@ async function createReview(username, itemId, rating, comment) {
 
     if (items.length === 0) {
         throw new Error("Item does not exist.");
+    }
+
+    // Prevent users from reviewing their own item
+    if(items[0].sellerID === username){
+        throw new Error("You cannot review your own item.")
+    }
+
+    const [existingReviews] = await pool.execute(
+        `
+        SELECT reviewId
+        FROM reviews
+        WHERE username = ? AND itemId = ?
+        `,
+        [username, itemId]
+    );
+
+    if (existingReviews.length > 0) {
+    throw new Error("You have already reviewed this item.");
     }
 
     // Insert the review
