@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
 // Check if the server is connected to MySQL
 app.get("/db-test", async (req, res) => {
     try {
-        const [rows] = await pool.execute("SELECT 1 AS connected");
+        const [rows] = await pool.execute(`SELECT 1 AS connected`);
 
         res.json({
             message: "Connected to MySQL",
@@ -400,7 +400,7 @@ app.post("/api/items", requireAuth, async (req, res) => {
 app.post("/api/reviews", requireAuth, async (req, res) =>{
     try{
         const{
-            itenId,
+            itemId,
             rating,
             comment
         } = req.body;
@@ -426,6 +426,38 @@ app.post("/api/reviews", requireAuth, async (req, res) =>{
         res.status(400).json({
             success: false,
             message: error.message
+        });
+    }
+});
+
+app.get("/api/reviews", async (req, res) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT
+                r.reviewId,
+                r.itemId,
+                r.username,
+                r.rating,
+                r.comment,
+                r.reviewDate,
+                i.itemTitle
+            FROM reviews AS r
+            INNER JOIN items AS i
+                ON r.itemId = i.itemId
+            ORDER BY r.reviewDate DESC
+        `);
+
+        res.json({
+            success: true,
+            reviews: rows
+        });
+
+    } catch (error) {
+        console.error("Get reviews error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not retrieve reviews."
         });
     }
 });
