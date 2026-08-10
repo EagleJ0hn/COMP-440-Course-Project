@@ -423,9 +423,9 @@ app.post("/api/reviews", requireAuth, async (req, res) =>{
         });
     } catch (error){
         console.error("Create review error:", error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
-            message: "Could not submit review."
+            message: error.message
         });
     }
 });

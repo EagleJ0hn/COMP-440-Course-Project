@@ -9,22 +9,37 @@ async function checkLoginStatus(){
 
         if (result.success){
             // User is logged in
-            loginLink.style.display = "none";
-            logoutButton.style.display = "inline-block";
+            if (loginLink) {
+                loginLink.style.display = "none";
+            }
+
+            if (logoutButton) {
+                logoutButton.style.display = "inline-block";
+            }
         }else{
             //User is logged out
-            loginLink.style.display = "inline";
-            logoutButton.style.display = "none";
+            if (loginLink) {
+                loginLink.style.display = "inline";
+            }
+
+            if (logoutButton) {
+                logoutButton.style.display = "none";
+            }
         }
     } catch (error){
         console.error("Error checking login status:", error);
 
-        loginLink.style.display = "inline";
-        logoutButton.style.display = "none";
+        if (loginLink) {
+            loginLink.style.display = "inline";
+        }
+
+        if (logoutButton) {
+            logoutButton.style.display = "none";
+        }
     }
 }
 
-
+// Logout
 if (logoutButton) {
     logoutButton.addEventListener("click", async () => {
         try {
@@ -33,11 +48,11 @@ if (logoutButton) {
             });
 
             const result = await response.json();
-
-            alert(result.message);
-
+            
             if (result.success) {
-                window.location.href = "/login.html";
+                window.location.href = "/index.html";
+            } else {
+                alert(result.message);
             }
 
         } catch (error) {
