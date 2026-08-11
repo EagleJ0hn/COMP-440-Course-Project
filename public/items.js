@@ -44,35 +44,8 @@ function renderItems(container, items) {
         card.querySelector(".item-title").textContent =
             item.itemTitle;
 
-<<<<<<< HEAD
         card.querySelector(".item-description").textContent =
             item.itemDescription || "No description";
-=======
-        article.innerHTML = `
-            <h3>${escapeHtml(item.itemTitle)}</h3>
-            <p>${escapeHtml(item.itemDescription || "No description")}</p>
-            <p><strong>Price:</strong> ${escapeHtml(
-                formatPrice(item.itemPrice)
-            )}</p>
-            <p><strong>Seller:</strong> ${escapeHtml(item.sellerID)}</p>
-            <p>
-                <strong>Categories:</strong>
-                ${escapeHtml(categoryList.join(", ") || "None")}
-            </p>
-            <small>
-                Posted ${escapeHtml(formatDate(item.datePosted))}
-            </small>
-        `;
-        
-        const reviewButton = document.createElement("button");
-        reviewButton.textContent = "Review Item";
-
-        reviewButton.addEventListener("click", () => {
-            window.location.href = `/reviews.html?itemId=${item.itemId}`;
-        });
-
-        article.appendChild(reviewButton);
->>>>>>> 187b6555796869dd064df3e522a2a30eda830012
 
         card.querySelector(".item-price").textContent =
             formatPrice(item.itemPrice);
