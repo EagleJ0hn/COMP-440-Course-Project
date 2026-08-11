@@ -1,5 +1,6 @@
 "use strict";
 
+// Page elements
 const allItemsList = document.getElementById("allItemsList");
 const myItemsList = document.getElementById("myItemsList");
 const searchResults = document.getElementById("searchResults");
@@ -9,121 +10,81 @@ const myItemsSection = document.getElementById("my-items");
 
 const addItemForm = document.getElementById("addItemForm");
 const searchForm = document.getElementById("searchForm");
-const messageElement = document.getElementById("message");
+
+const itemCardTemplate = document.getElementById("itemCardTemplate");
 
 let currentUsername = null;
 
-function showMessage(message, isError = false) {
-    messageElement.textContent = message;
-    messageElement.className = isError ? "error" : "success";
-}
-
-function clearMessage() {
-    messageElement.textContent = "";
-    messageElement.className = "";
-}
-
-function escapeHtml(value) {
-    const element = document.createElement("div");
-    element.textContent = String(value ?? "");
-    return element.innerHTML;
-}
-
+// Format price
 function formatPrice(price) {
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD"
-    }).format(Number(price));
+    return `$${Number(price).toFixed(2)}`;
 }
 
+
+// Format date
 function formatDate(date) {
-    const parsedDate = new Date(date);
-
-    if (Number.isNaN(parsedDate.getTime())) {
-        return "Unknown date";
-    }
-
-    return new Intl.DateTimeFormat("en-US", {
-        dateStyle: "medium",
-        timeStyle: "short"
-    }).format(parsedDate);
+    return new Date(date).toLocaleString();
 }
 
+
+// Display items
 function renderItems(container, items) {
     container.replaceChildren();
 
-    if (!Array.isArray(items) || items.length === 0) {
-        const paragraph = document.createElement("p");
-        paragraph.textContent = "No items found.";
-        container.appendChild(paragraph);
+    if (items.length === 0) {
+        const message = document.createElement("p");
+        message.textContent = "No items found.";
+        container.appendChild(message);
         return;
     }
 
     for (const item of items) {
-        const article = document.createElement("article");
-        article.className = "card";
+        const card = itemCardTemplate.content.cloneNode(true);
 
-        const categoryList = item.categories
-            ? String(item.categories)
-                  .split(",")
-                  .map(category => category.trim())
-                  .filter(Boolean)
-            : [];
+        card.querySelector(".item-title").textContent =
+            item.itemTitle;
 
-        article.innerHTML = `
-            <h3>${escapeHtml(item.itemTitle)}</h3>
-            <p>${escapeHtml(item.itemDescription || "No description")}</p>
-            <p><strong>Price:</strong> ${escapeHtml(
-                formatPrice(item.itemPrice)
-            )}</p>
-            <p><strong>Seller:</strong> ${escapeHtml(item.sellerID)}</p>
-            <p>
-                <strong>Categories:</strong>
-                ${escapeHtml(categoryList.join(", ") || "None")}
-            </p>
-            <small>
-                Posted ${escapeHtml(formatDate(item.datePosted))}
-            </small>
-        `;
+        card.querySelector(".item-description").textContent =
+            item.itemDescription || "No description";
 
-        container.appendChild(article);
+        card.querySelector(".item-price").textContent =
+            formatPrice(item.itemPrice);
+
+        card.querySelector(".item-seller").textContent =
+            item.sellerID;
+
+        card.querySelector(".item-categories").textContent =
+            item.categories || "None";
+
+        card.querySelector(".item-date").textContent =
+            `Posted ${formatDate(item.datePosted)}`;
+
+        container.appendChild(card);
     }
 }
 
+
+// Send request to server
 async function apiRequest(url, options = {}) {
-    const headers = {
-        Accept: "application/json",
-        ...options.headers
-    };
-
-    if (options.body) {
-        headers["Content-Type"] = "application/json";
-    }
-
     const response = await fetch(url, {
         ...options,
-        headers,
-        credentials: "same-origin"
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers
+        }
     });
 
-    let data;
-
-    try {
-        data = await response.json();
-    } catch {
-        data = {
-            success: false,
-            message: "The server returned an invalid response."
-        };
-    }
+    const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(data.message || "The request failed.");
+        throw new Error(data.message || "Request failed.");
     }
 
     return data;
 }
 
+
+// Check if user is logged in
 async function checkAuthentication() {
     try {
         const result = await apiRequest("/api/me");
@@ -140,19 +101,21 @@ async function checkAuthentication() {
     }
 }
 
+
+// Load all items
 async function loadAllItems() {
     try {
         const result = await apiRequest("/api/items");
         renderItems(allItemsList, result.items);
     } catch (error) {
-        renderItems(allItemsList, []);
         showMessage(error.message, true);
     }
 }
 
+
+// Load current user's items
 async function loadMyItems() {
     if (!currentUsername) {
-        renderItems(myItemsList, []);
         return;
     }
 
@@ -160,11 +123,12 @@ async function loadMyItems() {
         const result = await apiRequest("/api/items/mine");
         renderItems(myItemsList, result.items);
     } catch (error) {
-        renderItems(myItemsList, []);
         showMessage(error.message, true);
     }
 }
 
+
+// Add item
 addItemForm.addEventListener("submit", async event => {
     event.preventDefault();
     clearMessage();
@@ -176,16 +140,11 @@ addItemForm.addEventListener("submit", async event => {
 
     const formData = new FormData(addItemForm);
 
-    const categories = String(formData.get("categories") || "")
-        .split(",")
-        .map(category => category.trim().toLowerCase())
-        .filter(Boolean);
-
     const item = {
-        title: String(formData.get("title") || "").trim(),
-        description: String(formData.get("description") || "").trim(),
+        title: formData.get("title").trim(),
+        description: formData.get("description").trim(),
         price: Number(formData.get("price")),
-        categories
+        categories: formData.get("categories")
     };
 
     try {
@@ -197,24 +156,21 @@ addItemForm.addEventListener("submit", async event => {
         showMessage(result.message);
         addItemForm.reset();
 
-        await Promise.all([
-            loadAllItems(),
-            loadMyItems()
-        ]);
+        loadAllItems();
+        loadMyItems();
     } catch (error) {
         showMessage(error.message, true);
     }
 });
 
+
+// Search items
 searchForm.addEventListener("submit", async event => {
     event.preventDefault();
     clearMessage();
 
     const formData = new FormData(searchForm);
-
-    const category = String(formData.get("category") || "")
-        .trim()
-        .toLowerCase();
+    const category = formData.get("category").trim().toLowerCase();
 
     try {
         const result = await apiRequest(
@@ -223,18 +179,16 @@ searchForm.addEventListener("submit", async event => {
 
         renderItems(searchResults, result.items);
     } catch (error) {
-        renderItems(searchResults, []);
         showMessage(error.message, true);
     }
 });
 
+
+// Start page
 async function initializePage() {
     await checkAuthentication();
-
-    await Promise.all([
-        loadAllItems(),
-        loadMyItems()
-    ]);
+    await loadAllItems();
+    await loadMyItems();
 }
 
 initializePage();

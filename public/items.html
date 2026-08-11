@@ -21,7 +21,6 @@
     </header>
     <main>
         <h1>Items</h1>
-            <div id="message" role="alert"></div>
 
             <section id="add-item" class="view hidden">
                 <h2>Add Item</h2>
@@ -56,6 +55,31 @@
                 <h2>All Items</h2>
                 <div id="allItemsList" class="cards"></div>
             </section>
+
+            <template id="itemCardTemplate">
+                <article class="card">
+                    <h3 class="item-title"></h3>
+
+                    <p class="item-description"></p>
+
+                    <p>
+                        <strong>Price:</strong>
+                        <span class="item-price"></span>
+                    </p>
+
+                    <p>
+                        <strong>Seller:</strong>
+                        <span class="item-seller"></span>
+                    </p>
+
+                    <p>
+                        <strong>Categories:</strong>
+                        <span class="item-categories"></span>
+                    </p>
+
+                    <small class="item-date"></small>
+                </article>
+            </template>
 
     </main>
 
