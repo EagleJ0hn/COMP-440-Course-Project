@@ -12,6 +12,21 @@ const addItemForm = document.getElementById("addItemForm");
 const searchForm = document.getElementById("searchForm");
 
 const itemCardTemplate = document.getElementById("itemCardTemplate");
+const message = document.getElementById("message");
+
+function clearMessage() {
+    if (message) {
+        message.textContent = "";
+    }
+}
+
+function showMessage(text, isError = false) {
+    if (message) {
+        message.textContent = text;
+    }
+
+    console.log(text);
+}
 
 let currentUsername = null;
 
