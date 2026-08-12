@@ -30,6 +30,10 @@ body {
     margin: 0;
 }
 
+section {
+    margin-bottom: 3em;
+}
+
 nav {
     margin-top: 1em;
 }
@@ -66,4 +70,8 @@ form {
     padding: 2em;
     gap: 10px;
     border-radius: 8px;
+}
+
+.hidden {
+    display: none !important;
 }

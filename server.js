@@ -75,7 +75,6 @@ app.post("/api/login", async (req, res) => {
             });
     }
 
-    //Authenticate the user
     const result = await loginUser(username, password);
 
     if (!result.success) {
@@ -392,6 +391,207 @@ app.post("/api/items", requireAuth, async (req, res) => {
         res.status(400).json({
             success: false,
             message: error.sqlMessage || error.message
+        });
+
+    } finally {
+        connection.release();
+    }
+});
+
+app.put("/api/items/:id", requireAuth, async (req, res) => {
+    const itemId = req.params.id;
+    const price = Number(req.body.price);
+
+    let submittedCategories = req.body.categories;
+
+    if (typeof submittedCategories === "string") {
+        submittedCategories = submittedCategories.split(",");
+    }
+
+    if (!Array.isArray(submittedCategories)) {
+        submittedCategories = [];
+    }
+
+    const categories = [
+        ...new Set(
+            submittedCategories
+                .map(category => String(category).trim().toLowerCase())
+                .filter(Boolean)
+        )
+    ];
+
+    if (!Number.isFinite(price) || price <= 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Enter a valid price greater than zero."
+        });
+    }
+
+    if (categories.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Enter at least one category."
+        });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        const [items] = await connection.execute(
+            `
+            SELECT itemId
+            FROM items
+            WHERE itemId = ?
+              AND sellerID = ?
+            `,
+            [itemId, req.username]
+        );
+
+        if (items.length === 0) {
+            await connection.rollback();
+
+            return res.status(403).json({
+                success: false,
+                message: "You can only edit your own items."
+            });
+        }
+
+        await connection.execute(
+            `
+            UPDATE items
+            SET itemPrice = ?
+            WHERE itemId = ?
+            `,
+            [price, itemId]
+        );
+
+        await connection.execute(
+            `
+            DELETE FROM item_categories
+            WHERE itemId = ?
+            `,
+            [itemId]
+        );
+
+        for (const categoryName of categories) {
+            await connection.execute(
+                `
+                INSERT INTO categories (categoryName)
+                VALUES (?)
+                ON DUPLICATE KEY UPDATE
+                    categoryName = VALUES(categoryName)
+                `,
+                [categoryName]
+            );
+
+            const [categoryRows] = await connection.execute(
+                `
+                SELECT categoryId
+                FROM categories
+                WHERE categoryName = ?
+                `,
+                [categoryName]
+            );
+
+            await connection.execute(
+                `
+                INSERT INTO item_categories (itemId, categoryId)
+                VALUES (?, ?)
+                `,
+                [itemId, categoryRows[0].categoryId]
+            );
+        }
+
+        await connection.commit();
+
+        res.json({
+            success: true,
+            message: "Item updated successfully."
+        });
+
+    } catch (error) {
+        await connection.rollback();
+
+        console.error("Update item error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not update the item."
+        });
+
+    } finally {
+        connection.release();
+    }
+});
+
+app.delete("/api/items/:id", requireAuth, async (req, res) => {
+    const itemId = req.params.id;
+
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        const [items] = await connection.execute(
+            `
+            SELECT itemId
+            FROM items
+            WHERE itemId = ?
+              AND sellerID = ?
+            `,
+            [itemId, req.username]
+        );
+
+        if (items.length === 0) {
+            await connection.rollback();
+
+            return res.status(403).json({
+                success: false,
+                message: "You can only delete your own items."
+            });
+        }
+
+        await connection.execute(
+            `
+            DELETE FROM item_categories
+            WHERE itemId = ?
+            `,
+            [itemId]
+        );
+
+        await connection.execute(
+            `
+            DELETE FROM reviews
+            WHERE itemId = ?
+            `,
+            [itemId]
+        );
+
+        await connection.execute(
+            `
+            DELETE FROM items
+            WHERE itemId = ?
+            `,
+            [itemId]
+        );
+
+        await connection.commit();
+
+        res.json({
+            success: true,
+            message: "Item deleted successfully."
+        });
+
+    } catch (error) {
+        await connection.rollback();
+
+        console.error("Delete item error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not delete the item."
         });
 
     } finally {

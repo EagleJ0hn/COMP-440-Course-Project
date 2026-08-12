@@ -39,20 +39,12 @@ function formatPrice(price) {
 
 // Format date
 function formatDate(date) {
-    return new Date(date).toLocaleString();
+    return new Date(date).toLocaleDateString();
 }
 
-
-// Display items
-function renderItems(container, items) {
+// Display all items
+function renderAllItems(container, items) {
     container.replaceChildren();
-
-    if (items.length === 0) {
-        const message = document.createElement("p");
-        message.textContent = "No items found.";
-        container.appendChild(message);
-        return;
-    }
 
     for (const item of items) {
         const card = itemCardTemplate.content.cloneNode(true);
@@ -79,6 +71,113 @@ function renderItems(container, items) {
     }
 }
 
+// Display current user's items
+function renderMyItems(container, items) {
+    container.replaceChildren();
+
+    for (const item of items) {
+        const card = itemCardTemplate.content.cloneNode(true);
+
+        card.querySelector(".item-title").textContent =
+            item.itemTitle;
+
+        card.querySelector(".item-description").textContent =
+            item.itemDescription || "No description";
+
+        card.querySelector(".item-price").textContent =
+            formatPrice(item.itemPrice);
+
+        card.querySelector(".item-seller").textContent =
+            item.sellerID;
+
+        card.querySelector(".item-categories").textContent =
+            item.categories || "None";
+
+        card.querySelector(".item-date").textContent =
+            `Posted ${formatDate(item.datePosted)}`;
+
+        const editButton = document.createElement("button");
+        editButton.textContent = "Edit";
+
+        editButton.addEventListener("click", async () => {
+            const newPrice = prompt(
+                "Enter new price:",
+                item.itemPrice
+            );
+
+            if (newPrice === null) {
+                return;
+            }
+
+            const newCategories = prompt(
+                "Enter categories separated by commas:",
+                item.categories
+            );
+
+            if (newCategories === null) {
+                return;
+            }
+
+            try {
+                const result = await apiRequest(
+                    `/api/items/${item.itemId}`,
+                    {
+                        method: "PUT",
+                        body: JSON.stringify({
+                            price: Number(newPrice),
+                            categories: newCategories
+                        })
+                    }
+                );
+
+                alert(result.message);
+
+                await loadAllItems();
+                await loadMyItems();
+
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Delete";
+
+        deleteButton.addEventListener("click", async () => {
+            const confirmed = confirm(
+                `Delete "${item.itemTitle}"?`
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const result = await apiRequest(
+                    `/api/items/${item.itemId}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+                alert(result.message);
+
+                await loadAllItems();
+                await loadMyItems();
+
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        const article = card.querySelector(".card");
+
+        article.appendChild(editButton);
+        article.appendChild(deleteButton);
+
+        container.appendChild(card);
+    }
+}
 
 // Send request to server
 async function apiRequest(url, options = {}) {
@@ -124,7 +223,7 @@ async function loadAllItems() {
     try {
         const result = await apiRequest("/api/items");
 
-        renderItems(allItemsList, result.items);
+        renderAllItems(allItemsList, result.items);
 
     } catch (error) {
         alert(error.message);
@@ -141,7 +240,7 @@ async function loadMyItems() {
     try {
         const result = await apiRequest("/api/items/mine");
 
-        renderItems(myItemsList, result.items);
+        renderMyItems(myItemsList, result.items);
 
     } catch (error) {
         alert(error.message);
