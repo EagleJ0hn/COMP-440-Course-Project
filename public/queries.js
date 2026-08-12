@@ -17,6 +17,8 @@ const query6Button = document.getElementById("query6Button");
 
 const username = document.getElementById("username");
 
+const queryDescription = document.getElementById("queryDescription");
+
 const queryResultList = document.getElementById("queryResultList");
 const categoryX = document.getElementById("categoryX");
 const categoryY = document.getElementById("categoryY");
@@ -32,6 +34,8 @@ function resetQueryDisplay() {
 // Query 1
 query1Button.addEventListener("click", async () => {
     resetQueryDisplay();
+    queryDescription.textContent =
+        "Query 1: Displays the most expensive item(s) in each category.";
 
     try {
         const response = await fetch("/api/queries/query1");
@@ -92,6 +96,9 @@ query1Button.addEventListener("click", async () => {
 // Query 2
 query2Button.addEventListener("click", () => {
     resetQueryDisplay();
+    queryDescription.textContent =
+        "Query 2: Finds users who posted different items in two specified categories on the same day.";
+
     query2Inputs.style.display = "block";
 });
 
@@ -144,6 +151,9 @@ runQuery2Button.addEventListener("click", async () => {
 // Query 3
 query3Button.addEventListener("click", () => {
     resetQueryDisplay();
+    queryDescription.textContent =
+        "Query 3: Displays items posted by a specified user that have only Excellent or Good reviews.";
+    
     query3Inputs.style.display = "block";
 });
 
@@ -218,7 +228,10 @@ runQuery3Button.addEventListener("click", async () => {
 // Query 4
 query4Button.addEventListener("click", () => {
     resetQueryDisplay();
-    query4Inputs.style.display = "block";
+    queryDescription.textContent =
+        "Query 4: Displays the user(s) who posted the largest number of items on a selected date.";
+   
+        query4Inputs.style.display = "block";
 });
 
 runQuery4Button.addEventListener("click", async () => {
@@ -269,6 +282,8 @@ runQuery4Button.addEventListener("click", async () => {
 // Query 5
 query5Button.addEventListener("click", async () => {
     resetQueryDisplay();
+    queryDescription.textContent =
+        "Query 5: Displays users who have written reviews, their total number of reviews, and their Poor reviews.";
 
     try {
         const response = await fetch("/api/queries/query5");
@@ -358,6 +373,8 @@ query5Button.addEventListener("click", async () => {
 // Query 6
 query6Button.addEventListener("click", async () => {
     resetQueryDisplay();
+    queryDescription.textContent =
+        "Query 6: Displays users whose posted items have never received a Poor review.";
 
     try {
         const response = await fetch("/api/queries/query6");
