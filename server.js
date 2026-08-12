@@ -702,6 +702,78 @@ app.get("/api/queries/query1", async (req, res) => {
     }
 });
 
+// Query 2: Find users who posted at least two different items on the same day
+app.get("/api/queries/query2", async (req, res) => {
+
+    const categoryX = String(req.query.categoryX || "")
+        .trim()
+        .toLowerCase();
+
+    const categoryY = String(req.query.categoryY || "")
+        .trim()
+        .toLowerCase();
+
+    if (!categoryX || !categoryY) {
+        return res.status(400).json({
+            success: false,
+            message: "Both categories are required."
+        });
+    }
+
+    try {
+
+        const [rows] = await pool.execute(
+            `
+            SELECT DISTINCT
+                i1.sellerID AS username,
+                DATE(i1.datePosted) AS postDate,
+                COUNT(DISTINCT i1.itemId) AS itemCount
+            FROM items AS i1
+            INNER JOIN item_categories AS ic1
+                ON i1.itemId = ic1.itemId
+            INNER JOIN categories AS c1
+                ON ic1.categoryId = c1.categoryId
+
+            INNER JOIN items AS i2
+                ON i1.sellerID = i2.sellerID
+                AND DATE(i1.datePosted) = DATE(i2.datePosted)
+                AND i1.itemId <> i2.itemId
+
+            INNER JOIN item_categories AS ic2
+                ON i2.itemId = ic2.itemId
+            INNER JOIN categories AS c2
+                ON ic2.categoryId = c2.categoryId
+
+            WHERE LOWER(c1.categoryName) = ?
+              AND LOWER(c2.categoryName) = ?
+
+            GROUP BY
+                i1.sellerID,
+                DATE(i1.datePosted)
+
+            ORDER BY
+                DATE(i1.datePosted),
+                i1.sellerID
+            `,
+            [categoryX, categoryY]
+        );
+
+        res.json({
+            success: true,
+            users: rows
+        });
+
+    } catch (error) {
+
+        console.error("Query 2 error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not execute Query 2."
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
