@@ -32,41 +32,6 @@ async function createReview(username, itemId, rating, comment) {
         throw new Error("Item does not exist.");
     }
 
-    // Prevent users from reviewing their own item
-    if(items[0].sellerID === username){
-        throw new Error("You cannot review your own item.")
-    }
-
-    const [existingReviews] = await pool.execute(
-        `
-        SELECT reviewId
-        FROM reviews
-        WHERE username = ? AND itemId = ?
-        `,
-        [username, itemId]
-    );
-
-    if (existingReviews.length > 0) {
-    throw new Error("You have already reviewed this item.");
-    }
-
-    // Prevent users from submitting more than 3 reviews per day
-    const [dailyReviews] = await pool.execute(
-    `
-    SELECT COUNT(*) AS reviewCount
-    FROM reviews
-    WHERE username = ?
-      AND DATE(reviewDate) = CURDATE()
-    `,
-    [username]
-);
-
-if (dailyReviews[0].reviewCount >= 3) {
-    throw new Error(
-        "You can only submit three reviews per day."
-    );
-}
-
     // Insert the review
     const [result] = await pool.execute(
         `
