@@ -831,6 +831,138 @@ app.get("/api/queries/query3", async (req, res) => {
     }
 });
 
+// Query 4: Given a date, display the user(s) who posted the most items on that date, along with the number of items they posted. If there is a tie, display all users who posted the maximum number of items.
+app.get("/api/queries/query4", async (req, res) => {
+    const date = String(req.query.date || "").trim();
+
+    if (!date) {
+        return res.status(400).json({
+            success: false,
+            message: "Date is required."
+        });
+    }
+
+    try {
+        const [rows] = await pool.execute(
+            `
+            SELECT
+                sellerID AS username,
+                COUNT(*) AS itemCount
+            FROM items
+            WHERE DATE(datePosted) = ?
+            GROUP BY sellerID
+            HAVING COUNT(*) = (
+                SELECT MAX(itemCount)
+                FROM (
+                    SELECT
+                        COUNT(*) AS itemCount
+                    FROM items
+                    WHERE DATE(datePosted) = ?
+                    GROUP BY sellerID
+                ) AS itemCounts
+            )
+            ORDER BY sellerID
+            `,
+            [date, date]
+        );
+
+        res.json({
+            success: true,
+            users: rows
+        });
+
+    } catch (error) {
+        console.error("Query 4 error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Failed to execute Query 4."
+        });
+    }
+});
+
+// Query 5: Display users who have submitted one or more reviews, and every review they have written is rated Poor.
+app.get("/api/queries/query5", async (req, res) => {
+    try {
+        const [rows] = await pool.execute(
+            `
+            SELECT
+                r.username,
+                totals.totalReviews,
+                r.reviewId,
+                r.itemId,
+                i.itemTitle,
+                r.rating,
+                r.comment,
+                r.reviewDate
+            FROM reviews AS r
+            INNER JOIN items AS i
+                ON r.itemId = i.itemId
+            INNER JOIN (
+                SELECT
+                    username,
+                    COUNT(*) AS totalReviews
+                FROM reviews
+                GROUP BY username
+            ) AS totals
+                ON r.username = totals.username
+            ORDER BY
+                r.username,
+                r.reviewDate
+            `
+        );
+
+        res.json({
+            success: true,
+            reviews: rows
+        });
+
+    } catch (error) {
+        console.error("Query 5 error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Failed to execute Query 5."
+        });
+    }
+});
+
+// Query 6: Display users whose posted items have never received a Poor review. Items with no reviews also satisfy this condition.
+app.get("/api/queries/query6", async (req, res) => {
+    try {
+        const [rows] = await pool.execute(
+            `
+            SELECT DISTINCT
+                i.sellerID AS username
+            FROM items AS i
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM items AS i2
+                INNER JOIN reviews AS r
+                    ON i2.itemId = r.itemId
+                WHERE i2.sellerID = i.sellerID
+                  AND r.rating = 'Poor'
+            )
+            ORDER BY i.sellerID
+            `
+        );
+
+        res.json({
+            success: true,
+            users: rows
+        });
+
+    } catch (error) {
+        console.error("Query 6 error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Failed to execute Query 6."
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
+

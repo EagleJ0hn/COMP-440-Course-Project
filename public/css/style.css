@@ -72,6 +72,12 @@ form {
     border-radius: 8px;
 }
 
+#query2Inputs,
+#query3Inputs,
+#query4Inputs {
+    margin-top: 15px;
+}
+
 .hidden {
     display: none !important;
 }
