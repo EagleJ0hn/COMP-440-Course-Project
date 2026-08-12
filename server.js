@@ -20,7 +20,6 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Check if the server is connected to MySQL
 app.get("/db-test", async (req, res) => {
     try {
         const [rows] = await pool.execute(`SELECT 1 AS connected`);
@@ -37,7 +36,6 @@ app.get("/db-test", async (req, res) => {
 
 app.post("/api/register", async (req, res) => {
     try{
-        // Validate the input data
         const validation = validateInput(req.body);
 
         if (!validation.valid) {
