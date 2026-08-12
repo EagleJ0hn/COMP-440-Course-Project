@@ -43,3 +43,24 @@ CREATE TABLE reviews(
     unique (username, itemId)
 );
 
+DELIMITER //
+
+CREATE TRIGGER limit_two_items_per_day
+BEFORE INSERT ON items
+FOR EACH ROW
+BEGIN
+    DECLARE items_today INT;
+
+    SELECT COUNT(*)
+    INTO items_today
+    FROM items
+    WHERE sellerID = NEW.sellerID
+      AND DATE(datePosted) = CURDATE();
+
+    IF items_today >= 2 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'You can only post two items per day.';
+    END IF;
+END//
+
+DELIMITER ;

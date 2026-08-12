@@ -15,6 +15,7 @@ const itemCardTemplate = document.getElementById("itemCardTemplate");
 
 let currentUsername = null;
 
+
 // Format price
 function formatPrice(price) {
     return `$${Number(price).toFixed(2)}`;
@@ -93,6 +94,7 @@ async function checkAuthentication() {
 
         addItemSection.classList.remove("hidden");
         myItemsSection.classList.remove("hidden");
+
     } catch {
         currentUsername = null;
 
@@ -106,9 +108,11 @@ async function checkAuthentication() {
 async function loadAllItems() {
     try {
         const result = await apiRequest("/api/items");
+
         renderItems(allItemsList, result.items);
+
     } catch (error) {
-        showMessage(error.message, true);
+        alert(error.message);
     }
 }
 
@@ -121,9 +125,11 @@ async function loadMyItems() {
 
     try {
         const result = await apiRequest("/api/items/mine");
+
         renderItems(myItemsList, result.items);
+
     } catch (error) {
-        showMessage(error.message, true);
+        alert(error.message);
     }
 }
 
@@ -131,10 +137,9 @@ async function loadMyItems() {
 // Add item
 addItemForm.addEventListener("submit", async event => {
     event.preventDefault();
-    clearMessage();
 
     if (!currentUsername) {
-        showMessage("You must log in before adding an item.", true);
+        alert("You must log in before adding an item.");
         return;
     }
 
@@ -153,13 +158,15 @@ addItemForm.addEventListener("submit", async event => {
             body: JSON.stringify(item)
         });
 
-        showMessage(result.message);
+        alert(result.message);
+
         addItemForm.reset();
 
-        loadAllItems();
-        loadMyItems();
+        await loadAllItems();
+        await loadMyItems();
+
     } catch (error) {
-        showMessage(error.message, true);
+        alert(error.message);
     }
 });
 
@@ -167,10 +174,11 @@ addItemForm.addEventListener("submit", async event => {
 // Search items
 searchForm.addEventListener("submit", async event => {
     event.preventDefault();
-    clearMessage();
 
     const formData = new FormData(searchForm);
-    const category = formData.get("category").trim().toLowerCase();
+
+    const category =
+        formData.get("category").trim().toLowerCase();
 
     try {
         const result = await apiRequest(
@@ -178,8 +186,9 @@ searchForm.addEventListener("submit", async event => {
         );
 
         renderItems(searchResults, result.items);
+
     } catch (error) {
-        showMessage(error.message, true);
+        alert(error.message);
     }
 });
 

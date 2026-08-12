@@ -386,12 +386,14 @@ app.post("/api/items", requireAuth, async (req, res) => {
         });
     } catch (error) {
         await connection.rollback();
+
         console.error("Add item error:", error);
 
-        res.status(500).json({
+        res.status(400).json({
             success: false,
-            message: "Could not add the item."
+            message: error.sqlMessage || error.message
         });
+
     } finally {
         connection.release();
     }
