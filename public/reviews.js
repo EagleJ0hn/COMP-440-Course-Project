@@ -1,15 +1,21 @@
 "use strict";
 
+// Page elements use by the review interface
 const reviewForm = document.getElementById("reviewForm");
 const reviewSection = document.getElementById("reviewSection");
 const message = document.getElementById("message");
 const authMessage = document.getElementById("authMessage");
 
 const reviewsList = document.getElementById("reviewsList");
+
+// Get the itemId from the URL when a user selects an item to review
 const urlParams = new URLSearchParams(window.location.search);
 const selectedItemId = urlParams.get("itemId");
+
 const itemInfo = document.getElementById("itemInfo");
 
+
+//Part 3: Check whether the user is logged in before they can submit a review
 async function checkAuthentication() {
     try {
         const response = await fetch("/api/me", {
@@ -37,6 +43,7 @@ async function checkAuthentication() {
     }
 }
 
+// Part 3: Load information about the item selected
 async function loadSelectedItem() {
     if (!selectedItemId) {
         itemInfo.textContent = "No item selected.";
@@ -68,6 +75,7 @@ async function loadSelectedItem() {
     }
 }
 
+// Part 3: Display all the reviews
 async function loadReviews() {
     try {
         const response = await fetch("/api/reviews");
@@ -79,13 +87,14 @@ async function loadReviews() {
 
         reviewsList.replaceChildren();
 
+        // Displays message when there are no reviews
         if (result.reviews.length === 0) {
             const paragraph = document.createElement("p");
             paragraph.textContent = "No reviews have been submitted yet.";
             reviewsList.appendChild(paragraph);
             return;
         }
-
+        // Displays each review returned by the server
         for (const review of result.reviews) {
             const article = document.createElement("article");
             article.className = "card";
@@ -131,12 +140,14 @@ async function loadReviews() {
     }
 }
 
+// Part 3: Handle submission of a new review
 reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     console.log("Review form submitted")
 
     message.textContent = "";
 
+    // Get information entered by the user
     const itemId = Number(
         document.getElementById("itemId").value
     );
@@ -154,6 +165,7 @@ reviewForm.addEventListener("submit", async (event) => {
             comment
         });
 
+        // Send the review to the server then insert it into the reviews table
         const response = await fetch("/api/reviews", {
             method: "POST",
 
@@ -192,11 +204,12 @@ reviewForm.addEventListener("submit", async (event) => {
     }
 });
 
-
+// Initialize review page
 checkAuthentication();
 loadReviews();
 loadSelectedItem();
 
+// If itemId was provided in the URL then place it into the review form
 if (selectedItemId){
     document.getElementById("itemId").value = selectedItemId;
 }

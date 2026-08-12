@@ -2,6 +2,7 @@
 
 const pool = require("../db");
 
+// Valid ratting values allows for reviews
 const VALID_RATINGS = [
     "Excellent",
     "Good",
@@ -9,6 +10,7 @@ const VALID_RATINGS = [
     "Poor"
 ];
 
+// Part 3: Creates reviews for an item submitted by a logged in user.
 async function createReview(username, itemId, rating, comment) {
 
     // Check that the rating is valid
@@ -21,7 +23,7 @@ async function createReview(username, itemId, rating, comment) {
     // Check that the item exists
     const [items] = await pool.execute(
         `
-        SELECT itemId, sellerID
+        SELECT itemId
         FROM items
         WHERE itemId = ?
         `,
@@ -32,7 +34,7 @@ async function createReview(username, itemId, rating, comment) {
         throw new Error("Item does not exist.");
     }
 
-    // Insert the review
+    // Insert the review into the database
     const [result] = await pool.execute(
         `
         INSERT INTO reviews (
