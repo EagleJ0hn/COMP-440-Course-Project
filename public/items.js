@@ -14,19 +14,6 @@ const searchForm = document.getElementById("searchForm");
 const itemCardTemplate = document.getElementById("itemCardTemplate");
 const message = document.getElementById("message");
 
-function clearMessage() {
-    if (message) {
-        message.textContent = "";
-    }
-}
-
-function showMessage(text, isError = false) {
-    if (message) {
-        message.textContent = text;
-    }
-
-    console.log(text);
-}
 
 let currentUsername = null;
 
@@ -41,6 +28,7 @@ function formatPrice(price) {
 function formatDate(date) {
     return new Date(date).toLocaleDateString();
 }
+
 
 // Display all items
 function renderAllItems(container, items) {
@@ -70,6 +58,7 @@ function renderAllItems(container, items) {
         container.appendChild(card);
     }
 }
+
 
 // Display current user's items
 function renderMyItems(container, items) {
@@ -178,6 +167,7 @@ function renderMyItems(container, items) {
         container.appendChild(card);
     }
 }
+
 
 // Send request to server
 async function apiRequest(url, options = {}) {
@@ -299,7 +289,7 @@ searchForm.addEventListener("submit", async event => {
             `/api/items/search?category=${encodeURIComponent(category)}`
         );
 
-        renderItems(searchResults, result.items);
+        renderAllItems(searchResults, result.items);
 
     } catch (error) {
         alert(error.message);
