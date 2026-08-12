@@ -774,6 +774,63 @@ app.get("/api/queries/query2", async (req, res) => {
     }
 });
 
+//Query 3: Display all items posted by a specified user that has at least one review or has Excellent or Good review
+app.get("/api/queries/query3", async (req, res) => {
+    const { username } = req.query;
+
+    if (!username) {
+        return res.status(400).json({
+            success: false,
+            message: "Username is required."
+        });
+    }
+
+    try {
+        const [items] = await pool.execute(
+            `
+            SELECT
+                i.itemId,
+                i.itemTitle,
+                i.itemDescription,
+                i.itemPrice,
+                i.datePosted,
+                i.sellerID
+            FROM items i
+            WHERE i.sellerID = ?
+
+              AND EXISTS (
+                  SELECT 1
+                  FROM reviews r
+                  WHERE r.itemId = i.itemId
+              )
+
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM reviews r
+                  WHERE r.itemId = i.itemId
+                    AND r.rating NOT IN ('Excellent', 'Good')
+              )
+
+            ORDER BY i.itemId
+            `,
+            [username]
+        );
+
+        res.json({
+            success: true,
+            items
+        });
+
+    } catch (error) {
+        console.error("Query 3 error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Failed to execute Query 3."
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
