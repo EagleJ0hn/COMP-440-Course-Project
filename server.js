@@ -662,6 +662,46 @@ app.get("/api/reviews", async (req, res) => {
     }
 });
 
+// Query 1: Display most expensive items in each category
+app.get("/api/queries/query1", async (req, res) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT
+                c.categoryName,
+                i.itemId,
+                i.itemTitle,
+                i.itemPrice,
+                i.sellerID
+            FROM items AS i
+            INNER JOIN item_categories AS ic
+                ON i.itemId = ic.itemId
+            INNER JOIN categories AS c
+                ON ic.categoryId = c.categoryId
+            WHERE i.itemPrice = (
+                SELECT MAX(i2.itemPrice)
+                FROM items AS i2
+                INNER JOIN item_categories AS ic2
+                    ON i2.itemId = ic2.itemId
+                WHERE ic2.categoryId = ic.categoryId
+            )
+            ORDER BY c.categoryName, i.itemPrice DESC
+        `);
+
+        res.json({
+            success: true,
+            items: rows
+        });
+
+    } catch (error) {
+        console.error("Query 1 error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Could not execute Query 1."
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
