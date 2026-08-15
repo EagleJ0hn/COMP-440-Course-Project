@@ -8,12 +8,6 @@ const authMessage = document.getElementById("authMessage");
 
 const reviewsList = document.getElementById("reviewsList");
 
-// Get the itemId from the URL when a user selects an item to review
-const urlParams = new URLSearchParams(window.location.search);
-const selectedItemId = urlParams.get("itemId");
-
-const itemInfo = document.getElementById("itemInfo");
-
 
 //Part 3: Check whether the user is logged in before they can submit a review
 async function checkAuthentication() {
@@ -43,13 +37,8 @@ async function checkAuthentication() {
     }
 }
 
-// Part 3: Load information about the item selected
+// Part 3: Load information into review selection dropdown
 async function loadSelectedItem() {
-    if (!selectedItemId) {
-        itemInfo.textContent = "No item selected.";
-        return;
-    }
-
     try {
         const response = await fetch("/api/items");
         const result = await response.json();
@@ -58,20 +47,24 @@ async function loadSelectedItem() {
             throw new Error(result.message);
         }
 
-        const item = result.items.find(
-            item => String(item.itemId) === String(selectedItemId)
-        );
+        const itemSelect = document.getElementById("itemId");
 
-        if (!item) {
-            itemInfo.textContent = "Item not found.";
-            return;
+        // Add each item to the dropdown
+        for (const item of result.items) {
+            const option = document.createElement("option");
+
+            // Keep the Item ID internally for the database request
+            option.value = item.itemId;
+
+            // Display the item name to the user
+            option.textContent = item.itemTitle;
+
+            itemSelect.appendChild(option);
         }
 
-        itemInfo.textContent = `Reviewing: ${item.itemTitle}`;
-
     } catch (error) {
-        console.error("Load item error:", error);
-        itemInfo.textContent = "Could not load item information.";
+        console.error("Load items error:", error);
+        message.textContent = "Could not load items.";
     }
 }
 
@@ -102,9 +95,6 @@ async function loadReviews() {
             const title = document.createElement("h3");
             title.textContent = review.itemTitle;
 
-            const item = document.createElement("p");
-            item.textContent = `Item ID: ${review.itemId}`;
-
             const reviewer = document.createElement("p");
             reviewer.textContent = `Reviewed by: ${review.username}`;
 
@@ -120,7 +110,6 @@ async function loadReviews() {
             ).toLocaleString()}`;
 
             article.appendChild(title);
-            article.appendChild(item);
             article.appendChild(reviewer);
             article.appendChild(rating);
             article.appendChild(comment);
@@ -208,8 +197,3 @@ reviewForm.addEventListener("submit", async (event) => {
 checkAuthentication();
 loadReviews();
 loadSelectedItem();
-
-// If itemId was provided in the URL then place it into the review form
-if (selectedItemId){
-    document.getElementById("itemId").value = selectedItemId;
-}
