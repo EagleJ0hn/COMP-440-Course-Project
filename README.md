@@ -5,7 +5,7 @@ Andrei David
     - Implemented Part 1 - Item Management
     - Implemented Part 2 - Category Management
     - Implemented SQL Query 4-6
-    
+
 
 Juan Aguilar
     - Implemented Part 3 - Review Management
@@ -13,7 +13,7 @@ Juan Aguilar
     - Implemented SQL Query 1-3
     - Implemented SQL Query interface
 
-Youtube link: https://youtu.be/se7UFob2hhE
+Youtube link: https://youtu.be/lNZcc5qWYWs
 
 If you would like to try please follow the instructions below.
 
