@@ -2,6 +2,10 @@
 Group Project for COMP 440 Database Design
 
 Andrei David
+    - Implemented Part 1 - Item Management
+    - Implemented Part 2 - Category Management
+    - Implemented SQL Query 4-6
+    
 
 Juan Aguilar
     - Implemented Part 3 - Review Management

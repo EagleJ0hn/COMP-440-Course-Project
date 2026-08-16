@@ -12,8 +12,6 @@ const addItemForm = document.getElementById("addItemForm");
 const searchForm = document.getElementById("searchForm");
 
 const itemCardTemplate = document.getElementById("itemCardTemplate");
-const message = document.getElementById("message");
-
 
 let currentUsername = null;
 
